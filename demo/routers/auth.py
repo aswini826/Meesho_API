@@ -7,8 +7,8 @@ from database import SessionLocal
 from models import Users
 
 router = APIRouter(
-    prefix='/Meesho API',
-    tags=['Meesho']
+    prefix='/Products API',
+    tags=['product details']
 )
 
 session = SessionLocal()
