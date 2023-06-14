@@ -1,5 +1,5 @@
 from typing_extensions import Annotated
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from starlette import status
@@ -36,8 +36,8 @@ db_dependency = Annotated[Session, Depends(get_db)]
 @router.post("/catagory", status_code=status.HTTP_201_CREATED)
 def create_catagory(db: db_dependency,
                     create_catagory_request: CreateCatagoryRequest):
-    if db.query(Catagory).filter(Catagory.name == create_catagory_request.name).first():
-        raise HTTPException(status_code=400, detail="name already exists")
+    if db.query(Catagory).filter(Catagory.catagory_id == create_catagory_request.catagory_id).first():
+        raise HTTPException(status_code=400, detail="Catagory already exists")
 
     create_catagory_model = Catagory(
         catagory_id=create_catagory_request.catagory_id,
@@ -54,5 +54,8 @@ def create_catagory(db: db_dependency,
 
 
 @router.get("/catagory", status_code=status.HTTP_200_OK)
-async def get_users(db: db_dependency):
-    return db.query(Catagory).all()
+async def get_users(db: db_dependency,
+                    page: int = Query(1, gt=0)):
+    per_page = 5
+    offset = (page - 1) * per_page
+    return db.query(Catagory).offset(offset).limit(per_page).all()
