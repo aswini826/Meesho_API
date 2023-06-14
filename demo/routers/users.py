@@ -1,5 +1,5 @@
 from typing_extensions import Annotated
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 from starlette import status
@@ -37,8 +37,8 @@ db_dependency = Annotated[Session, Depends(get_db)]
 @router.post("/customer", status_code=status.HTTP_201_CREATED)
 def create_customer(db: db_dependency,
                     create_customer_request: CreateCustomerRequest):
-    if db.query(Customer).filter(Customer.customer_name == create_customer_request.customer_name).first():
-        raise HTTPException(status_code=400, detail="name already exists")
+    if db.query(Customer).filter(Customer.customer_id == create_customer_request.customer_id).first():
+        raise HTTPException(status_code=400, detail="Customer ID already exists")
 
     create_customer_model = Customer(
         customer_id=create_customer_request.customer_id,
@@ -53,9 +53,12 @@ def create_customer(db: db_dependency,
     db.add(create_customer_model)
     db.commit()
     db.refresh(create_customer_model)
-    return {"message": "Catagory created Successfully"}
+    return {"message": "Customer created Successfully"}
 
 
 @router.get("/catagory", status_code=status.HTTP_200_OK)
-async def get_users(db: db_dependency):
-    return db.query(Customer).all()
+async def get_users(db: db_dependency,
+                    page: int = Query(1, gt=0)):
+    per_page = 4
+    offset = (page - 1) * per_page
+    return db.query(Customer).offset(offset).limit(per_page).all()
