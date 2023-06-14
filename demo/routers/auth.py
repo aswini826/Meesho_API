@@ -1,5 +1,5 @@
 from typing_extensions import Annotated
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from starlette import status
@@ -7,7 +7,7 @@ from database import SessionLocal
 from models import Users
 
 router = APIRouter(
-    prefix='/Products API',
+    prefix='/Product API',
     tags=['product details']
 )
 
@@ -44,8 +44,8 @@ db_dependency = Annotated[Session, Depends(get_db)]
 @router.post("/auth", status_code=status.HTTP_201_CREATED)
 def create_user(db: db_dependency,
                 create_user_request: CreateUserRequest):
-    if db.query(Users).filter(Users.product_name == create_user_request.product_name).first():
-        raise HTTPException(status_code=400, detail="Username already exists")
+    if db.query(Users).filter(Users.seller_id == create_user_request.seller_id).first():
+        raise HTTPException(status_code=400, detail="Product already exists")
 
     create_user_model = Users(
         product_name=create_user_request.product_name,
@@ -62,19 +62,22 @@ def create_user(db: db_dependency,
 
 
 @router.put("/update_details")
-async def update_user_password(update_details: UpdateProductDetails,
-                               db: db_dependency):
-    user = db.query(Users).filter(Users.product_name == update_details.product_name).first()
+async def update_product_details(update_details: UpdateProductDetails,
+                                 db: db_dependency):
+    user = db.query(Users).filter(Users.seller_id == update_details.seller_id).first()
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="This product are already exists")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="This seller are already exists")
 
     db.commit()
     return {'message': 'Products changed Successfully'}
 
 
 @router.get("/users", status_code=status.HTTP_200_OK)
-async def get_users(db: db_dependency):
-    return db.query(Users).all()
+async def get_users(db: db_dependency,
+                    page: int = Query(1, gt=0)):
+    per_page = 8
+    offset = (page - 1) * per_page
+    return db.query(Users).offset(offset).limit(per_page).all()
 
 
 @router.delete('/delete_user/{user_id}')
