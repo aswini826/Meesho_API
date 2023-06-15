@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from typing_extensions import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
@@ -18,8 +20,13 @@ class CreateCatagoryRequest(BaseModel):
     catagory_id: int
     name: str
     description: str
-    created_at: str
-    updated_at: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class UpdateCatagory(BaseModel):
+    name: str
+    description: str
 
 
 def get_db():
@@ -59,3 +66,22 @@ async def get_users(db: db_dependency,
     per_page = 5
     offset = (page - 1) * per_page
     return db.query(Catagory).offset(offset).limit(per_page).all()
+
+
+@router.put("/update_catagory_details")
+async def update_catagory(update_catagory_details: UpdateCatagory,
+                          db: db_dependency):
+    user = db.query(Catagory).filter(Catagory.name == update_catagory_details.name).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="This name are already exists")
+
+    db.commit()
+    return {'message': 'Catagory details changed Successfully'}
+
+
+@router.delete('/delete_user/{user_id}')
+def delete_user(user_id: int, db: db_dependency):
+    user = db.query(Catagory).filter(Catagory.id == user_id).first()
+    db.delete(user)
+    db.commit()
+    return {'message': 'Catagory deleted Successfully'}
