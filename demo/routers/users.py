@@ -23,6 +23,12 @@ class CreateCustomerRequest(BaseModel):
     phone: str
 
 
+class UpdateProductDetails(BaseModel):
+    customer_name: str
+    email: EmailStr
+    phone: str
+
+
 def get_db():
     db = SessionLocal()
     try:
@@ -62,3 +68,22 @@ async def get_users(db: db_dependency,
     per_page = 4
     offset = (page - 1) * per_page
     return db.query(Customer).offset(offset).limit(per_page).all()
+
+
+@router.put("/update_customer_details")
+async def update_customer(update_customer_details: UpdateProductDetails,
+                          db: db_dependency):
+    user = db.query(Customer).filter(Customer.email == update_customer_details.email).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="This Email are already exists")
+
+    db.commit()
+    return {'message': 'Customer details changed Successfully'}
+
+
+@router.delete('/delete_user/{user_id}')
+def delete_user(user_id: int, db: db_dependency):
+    user = db.query(Customer).filter(Customer.id == user_id).first()
+    db.delete(user)
+    db.commit()
+    return {'message': 'Customer deleted Successfully'}
