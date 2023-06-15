@@ -58,7 +58,7 @@ def create_user(db: db_dependency,
     db.add(create_user_model)
     db.commit()
     db.refresh(create_user_model)
-    return {"message": "User created Successfully"}
+    return {"message": "Product details created Successfully"}
 
 
 @router.put("/update_details")
@@ -85,4 +85,4 @@ def delete_user(user_id: int, db: db_dependency):
     user = db.query(Users).filter(Users.id == user_id).first()
     db.delete(user)
     db.commit()
-    return {'message': 'User deleted Successfully'}
+    return {'message': 'Product deleted Successfully'}
